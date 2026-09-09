@@ -1,8 +1,9 @@
 'use client'
 
+import { useDictation } from '@/hooks/sasonica/useDictation'
 import { CanvasError, ReplyResponse, canvasRequest } from '@/lib/sasonica/canvas'
 import { S } from '@/lib/sasonica/strings'
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useRef, useState } from 'react'
 
 /**
  * Sasonica: reply to a conversation from inside the player.
@@ -34,44 +35,14 @@ interface ReplyBoxProps {
 /** Six rows is where a reply stops being a reply; after that it scrolls. */
 const MAX_ROWS_PX = 6 * 24 + 16
 
-/**
- * The browser's own speech recogniser, where there is one. The app borrows
- * the system's; here it is the Web Speech API, which Chrome has and Firefox
- * does not — so the button is drawn only when it is really there.
- */
-type SpeechRecognitionLike = {
-  lang: string
-  interimResults: boolean
-  continuous: boolean
-  start: () => void
-  stop: () => void
-  onresult: ((event: { results: ArrayLike<ArrayLike<{ transcript: string }>> }) => void) | null
-  onerror: (() => void) | null
-  onend: (() => void) | null
-}
-
-function speechRecognition(): SpeechRecognitionLike | null {
-  if (typeof window === 'undefined') return null
-  const w = window as unknown as { SpeechRecognition?: new () => SpeechRecognitionLike; webkitSpeechRecognition?: new () => SpeechRecognitionLike }
-  const Ctor = w.SpeechRecognition || w.webkitSpeechRecognition
-  return Ctor ? new Ctor() : null
-}
-
 export default function ReplyBox({ libraryItemId, token, live, suggestion, onReplied, onSessionChanged }: ReplyBoxProps) {
   const inputRef = useRef<HTMLTextAreaElement | null>(null)
-  const recognitionRef = useRef<SpeechRecognitionLike | null>(null)
+  const dictation = useDictation()
   const [text, setText] = useState('')
   const [sending, setSending] = useState(false)
   const [status, setStatus] = useState('')
   const [failed, setFailed] = useState(false)
   const [pane, setPane] = useState<string | null>(null)
-  const [canDictate, setCanDictate] = useState(false)
-  const [listening, setListening] = useState(false)
-
-  useEffect(() => {
-    setCanDictate(!!speechRecognition())
-    return () => recognitionRef.current?.stop()
-  }, [])
 
   // Only an empty box shows the ghost, as on the terminal. An ended session
   // has no screen to read, but the server keeps a follow-up of its own for
@@ -119,25 +90,11 @@ export default function ReplyBox({ libraryItemId, token, live, suggestion, onRep
   }, [grow, libraryItemId, onReplied, onSessionChanged, sending, text, token])
 
   const dictate = useCallback(() => {
-    if (listening) return
-    const recognition = speechRecognition()
-    if (!recognition) return
-    recognitionRef.current = recognition
-    recognition.lang = navigator.language || 'en-US'
-    recognition.interimResults = false
-    recognition.continuous = false
-    recognition.onresult = (event) => {
-      const heard = String(event.results?.[0]?.[0]?.transcript || '').trim()
-      // Cancelled or heard nothing: leave what was already typed alone.
-      if (!heard) return
+    dictation.listen((heard) => {
       setText((prev) => (prev.trim() ? `${prev.trim()} ${heard}` : heard))
       window.setTimeout(grow, 0)
-    }
-    recognition.onerror = () => setListening(false)
-    recognition.onend = () => setListening(false)
-    setListening(true)
-    recognition.start()
-  }, [grow, listening])
+    })
+  }, [dictation, grow])
 
   const acceptGhost = useCallback(() => {
     if (!ghost) return
@@ -196,7 +153,7 @@ export default function ReplyBox({ libraryItemId, token, live, suggestion, onRep
           }}
           className="bg-bg text-foreground border-border grow resize-none overflow-y-auto rounded-sm border px-2 py-2 text-sm outline-hidden"
         />
-        {canDictate && (
+        {dictation.available && (
           <button
             type="button"
             disabled={sending}
@@ -204,7 +161,7 @@ export default function ReplyBox({ libraryItemId, token, live, suggestion, onRep
             aria-label={S.dictate}
             className="bg-primary text-foreground flex h-10 w-10 shrink-0 cursor-pointer items-center justify-center rounded-sm disabled:cursor-not-allowed disabled:opacity-50"
           >
-            <span className={`material-symbols text-xl ${listening ? 'animate-pulse' : ''}`}>mic</span>
+            <span className={`material-symbols text-xl ${dictation.listening ? 'animate-pulse' : ''}`}>mic</span>
           </button>
         )}
         <button
