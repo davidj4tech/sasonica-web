@@ -5,6 +5,8 @@ import LibraryItemMetadataEditModal, { type MetadataEditSection } from '@/compon
 import AudioTracksTable from '@/components/widgets/AudioTracksTable'
 import ChaptersTable from '@/components/widgets/ChaptersTable'
 import ConfirmDialog from '@/components/widgets/ConfirmDialog'
+// Sasonica: a conversation is a chat, not a book — see ConversationPage.
+import ConversationPage from '@/components/sasonica/ConversationPage'
 import EbookFilesTable from '@/components/widgets/EbookFilesTable'
 import EpisodeTable from '@/components/widgets/EpisodeTable'
 import ExpandableHtml from '@/components/widgets/ExpandableHtml'
@@ -15,6 +17,8 @@ import { useGlobalToast } from '@/contexts/ToastContext'
 import { useUser } from '@/contexts/UserContext'
 import { useCoverAccentColor } from '@/hooks/useCoverAccentColor'
 import { useItemPageSocket } from '@/hooks/useItemPageSocket'
+// Sasonica:
+import { useConversationSession } from '@/hooks/sasonica/useConversationSession'
 import { useTypeSafeTranslations } from '@/hooks/useTypeSafeTranslations'
 import { getLibraryItemCoverUrl } from '@/lib/coverUtils'
 import { secondsToTimestamp } from '@/lib/datefns'
@@ -35,7 +39,7 @@ interface LibraryItemClientProps {
 
 export default function LibraryItemClient({ libraryItem: initialLibraryItem }: LibraryItemClientProps) {
   const { library } = useLibrary()
-  const { serverSettings, getMediaItemProgress, userCanUpdate, userIsAdminOrUp } = useUser()
+  const { serverSettings, getMediaItemProgress, userCanUpdate, userIsAdminOrUp, token } = useUser()
   const { showToast } = useGlobalToast()
   const t = useTypeSafeTranslations()
 
@@ -56,6 +60,11 @@ export default function LibraryItemClient({ libraryItem: initialLibraryItem }: L
   useEffect(() => {
     setLibraryItem(initialLibraryItem)
   }, [initialLibraryItem])
+
+  // Sasonica: ask agent-media whether this item is a recorded Claude Code
+  // conversation. On an ordinary item — and wherever the canvas is not
+  // reachable — the answer is no and everything below is upstream's page.
+  const conversation = useConversationSession(libraryItem.id, token)
 
   const isPodcast = libraryItem.mediaType === 'podcast'
   const isBookWithAudio = libraryItem.mediaType === 'book' && ((libraryItem as BookLibraryItem).media.tracks?.length ?? 0) > 0
@@ -123,6 +132,26 @@ export default function LibraryItemClient({ libraryItem: initialLibraryItem }: L
       root.style.removeProperty('--tc-library-item-accent-rgb')
     }
   }, [accentRgb])
+
+  // Sasonica: the chat page, in place of the book chrome. Placed here, below
+  // every hook, so the swap does not change the hook order. Nothing is drawn
+  // until the probe answers: a conversation opened straight into a cover and
+  // a chapter list, yanked away a moment later, reads worse than a beat of
+  // nothing — and the page has already waited on the server for the item.
+  if (conversation.loading) return null
+  if (conversation.ok) {
+    return (
+      <ConversationPage
+        libraryItem={libraryItem}
+        token={token}
+        session={conversation}
+        showPlayButton={showPlayButton}
+        isItemPlaying={isItemPlaying}
+        onPlay={handlePlay}
+        onGoToTimestamp={handleGoToTimestamp}
+      />
+    )
+  }
 
   return (
     <div className="relative isolate h-full min-h-[calc(100vh-var(--header-height))]">
