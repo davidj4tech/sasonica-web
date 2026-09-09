@@ -6,6 +6,8 @@ import { useUser } from '@/contexts/UserContext'
 import { isLibraryIssuesPage } from '@/hooks/useLibraryRouteGuard'
 import { useTypeSafeTranslations } from '@/hooks/useTypeSafeTranslations'
 import { mergeClasses } from '@/lib/merge-classes'
+// Sasonica:
+import { S } from '@/lib/sasonica/strings'
 import { Library } from '@/types/api'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
@@ -66,6 +68,12 @@ export default function SideRailContent({
       label: t('ButtonLatest'),
       href: `/library/${libraryId}/latest`,
       mediaType: 'podcast' as const
+    },
+    // Sasonica: start a conversation. Not translated — see lib/sasonica/strings.
+    {
+      icon: <span className="material-symbols text-2xl">add_comment</span>,
+      label: S.newChat,
+      href: `/library/${libraryId}/ask`
     },
     {
       icon: (

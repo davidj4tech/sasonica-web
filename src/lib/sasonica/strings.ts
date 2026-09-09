@@ -23,5 +23,30 @@ export const S = {
   send: 'Send reply',
   goToPane: (pane: string) => `go to ${pane}`,
   play: 'Play',
-  pause: 'Pause'
+  pause: 'Pause',
+
+  // New chat
+  newChat: 'New chat',
+  askTo: 'To',
+  askLastLabel: (title: string) => `${title} (last)`,
+  askPlaceholder: 'What shall we talk about?',
+  askHint:
+    'Say or type what you want to talk about. Start with a conversation\u2019s name to continue it \u2014 \u201creply to drones, \u2026\u201d \u2014 or \u201cnew chat\u201d to force a fresh one.',
+  askNoCanvas: 'No agent-media canvas is set \u2014 see Settings.',
+  askWhich: 'Which conversation?',
+  askNothingToPick: 'Nothing to pick from yet.',
+  askSending: 'Sending\u2026',
+  askSendingTo: 'Sending to',
+  askIn: (seconds: number) => `in ${seconds}\u2026`,
+  askChange: 'Change',
+  askSendNow: 'Send now',
+  askWaiting: 'Session open \u2014 waiting for the first reply\u2026',
+  askScanning: 'Reply shelved \u2014 the library is scanning it\u2026',
+  askEndedUnshelved: 'The session ended before it was shelved.',
+  askNoItemYet: 'Still no item for it; it will appear in the library once it has spoken.',
+  askSwitched: (title: string) => `Switched to ${title}.`,
+  askSentTo: (title: string, reopened: boolean) => `Sent to ${title}${reopened ? ' (reopened)' : ''}.`,
+  askSentToHost: (where: string) => `Sent to ${where}.`,
+  askMeantNew: 'Meant a new chat? Send it there instead',
+  askFailed: 'Could not send that.'
 }

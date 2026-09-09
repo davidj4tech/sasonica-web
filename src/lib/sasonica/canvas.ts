@@ -56,13 +56,19 @@ export function setCanvasBaseUrl(url: string) {
   }
 }
 
-/** A canvas refusal carries the server's own words about why. */
+/**
+ * A canvas refusal carries the server's own words about why — and sometimes
+ * more than words: a 300 from /ask means "which conversation?" and brings the
+ * candidates with it, so the whole payload is kept.
+ */
 export class CanvasError extends Error {
   status: number
-  constructor(message: string, status: number) {
+  payload: Record<string, unknown>
+  constructor(message: string, status: number, payload: Record<string, unknown> = {}) {
     super(message)
     this.name = 'CanvasError'
     this.status = status
+    this.payload = payload
   }
 }
 
@@ -89,7 +95,7 @@ export async function canvasRequest<T>(method: 'GET' | 'POST', path: string, tok
   if (!res.ok || payload.ok === false) {
     // Prefer what the server said: "not a conversation", "not allowed to
     // reply", "session has gone" all read better than a status code.
-    throw new CanvasError(String(payload.error || res.statusText || 'Canvas request failed'), res.status)
+    throw new CanvasError(String(payload.error || res.statusText || 'Canvas request failed'), res.status, payload)
   }
   return payload as T
 }
@@ -155,4 +161,68 @@ export interface ReplyResponse {
   pane?: string | null
   /** The session had ended and was reopened; it reads the reply once loaded. */
   opened?: boolean
+}
+
+/** One row of the picker: a live session, or a conversation on the shelf. */
+export interface SessionRow {
+  session: string
+  title: string
+  live: boolean
+  pane?: string | null
+  /** When it was last written to; only on shelved ones. */
+  at?: number
+}
+
+export interface ConversationsResponse {
+  ok: boolean
+  sessions: SessionRow[]
+}
+
+/**
+ * POST /ask — words to a session, which one being the server's decision.
+ *
+ * `mode` says what it did: `new` opened a fresh session, `continued` put the
+ * words into an existing one, `switched` means the words were only a name so
+ * nothing was sent. `how` says why it chose that: picked here, spoken in the
+ * words, the conversation in the player, the last one spoken to, or default.
+ * With `dry` it decides and reports without sending.
+ */
+export interface AskRequest {
+  text: string
+  /** A session id, or "new" to force a fresh one. Empty lets the server choose. */
+  target?: string
+  /** The conversation in the player, if any: one of the routing candidates. */
+  player_item?: string
+  /** The last session this device spoke to: the fallback candidate. */
+  sticky?: string
+  /** Read the words for a name ("reply to drones, …"). Off when one is picked. */
+  parse?: boolean
+  dry?: boolean
+}
+
+export interface AskResponse {
+  ok: boolean
+  mode: 'new' | 'continued' | 'switched'
+  how?: string
+  session?: string | null
+  title?: string
+  /** The library item for that session, once there is one. */
+  item?: string | null
+  /** The words as the server read them — a spoken name is taken off the front. */
+  text?: string
+  pane?: string | null
+  /** The session had ended and was reopened. */
+  opened?: boolean
+}
+
+/** GET /conversation?session= — where a session started here has got to. */
+export interface SessionProgress {
+  ok: boolean
+  session: string
+  item: string | null
+  /** The library has the folder and is still building the item. */
+  scanning: boolean
+  live: boolean
+  pane: string | null
+  resumable: boolean
 }
