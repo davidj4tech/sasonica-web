@@ -47,7 +47,17 @@ export default function ConversationPage({
   const log = useConversationLog(libraryItem.id, token, true)
 
   return (
-    <div className="flex h-[calc(100vh-var(--header-height))] flex-col">
+    /* Exactly the height of the region this page is given, so the composer
+       is on screen without a scroll.
+       `h-full` cannot do it: the wrapper between here and the scroll
+       container has no height of its own, so a percentage resolves to
+       nothing. So this mirrors `.page-wrapper` in assets/app.css, including
+       the second rule that takes the media player's height off while
+       something is streaming — measuring the viewport alone leaves the page a
+       player-bar too tall, which is a small scroll to reach the box you want
+       to type in. `dvh`, not `vh`: on a phone the two differ by the browser's
+       own chrome. */
+    <div className="flex h-[calc(100dvh-4rem)] flex-col [.streaming_&]:h-[calc(100dvh-4rem-var(--media-player-height,165px))]">
       <div className="border-border flex shrink-0 items-center gap-2 border-b px-3 py-2">
         {session.live && <span className="bg-success size-2 shrink-0 rounded-full" title={S.sessionRunning} />}
         <h1 className="grow truncate text-base font-semibold">{libraryItem.media.metadata.title}</h1>
