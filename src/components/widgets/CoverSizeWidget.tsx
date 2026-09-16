@@ -3,16 +3,14 @@
 import IconBtn from '@/components/ui/IconBtn'
 import { useCardSize } from '@/contexts/CardSizeContext'
 import { useTypeSafeTranslations } from '@/hooks/useTypeSafeTranslations'
+import { AVAILABLE_COVER_SIZES, NUM_AVAILABLE_COVER_SIZES, coverSizeToIndex } from '@/lib/coverSizes'
 import { mergeClasses } from '@/lib/merge-classes'
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useMemo } from 'react'
 
-/** Available cover sizes in pixels */
-export const AVAILABLE_COVER_SIZES = [60, 80, 100, 120, 140, 160, 180, 200, 220]
-export const NUM_AVAILABLE_COVER_SIZES = 9
-const DEFAULT_SIZE_INDEX = 3
-export const NUM_AVAILABLE_MOBILE_COVER_SIZES = 3
-const DEFAULT_MOBILE_SIZE_INDEX = 2
-const BASE_COVER_SIZE = 120
+function coverSizeAtOffset(sizeIndex: number, offset: number): number {
+  const index = Math.max(0, Math.min(NUM_AVAILABLE_COVER_SIZES - 1, sizeIndex + offset))
+  return AVAILABLE_COVER_SIZES[index]
+}
 
 interface CoverSizeWidgetProps {
   className?: string
@@ -20,34 +18,21 @@ interface CoverSizeWidgetProps {
 
 export default function CoverSizeWidget({ className }: CoverSizeWidgetProps) {
   const t = useTypeSafeTranslations()
-  const { isMobile, setSizeMultiplier } = useCardSize()
-  const [sizeIndex, setSizeIndex] = useState(isMobile ? DEFAULT_MOBILE_SIZE_INDEX : DEFAULT_SIZE_INDEX)
-  const numAvailableCoverSizes = isMobile ? NUM_AVAILABLE_MOBILE_COVER_SIZES : NUM_AVAILABLE_COVER_SIZES
-  const [coverWidth, setCoverWidth] = useState(AVAILABLE_COVER_SIZES[sizeIndex])
+  const { coverWidth: savedCoverWidth, setCoverSize } = useCardSize()
 
-  useEffect(() => {
-    setSizeIndex(isMobile ? DEFAULT_MOBILE_SIZE_INDEX : DEFAULT_SIZE_INDEX)
-  }, [isMobile])
-
-  useEffect(() => {
-    setCoverWidth(AVAILABLE_COVER_SIZES[sizeIndex])
-  }, [sizeIndex])
-
-  useEffect(() => {
-    const multiplier = coverWidth / BASE_COVER_SIZE
-    setSizeMultiplier(multiplier)
-  }, [coverWidth, setSizeMultiplier])
+  const sizeIndex = coverSizeToIndex(savedCoverWidth)
+  const coverWidth = AVAILABLE_COVER_SIZES[sizeIndex]
 
   const increaseSize = useCallback(() => {
-    setSizeIndex((prev) => Math.min(numAvailableCoverSizes - 1, prev + 1))
-  }, [numAvailableCoverSizes])
+    setCoverSize(coverSizeAtOffset(sizeIndex, 1))
+  }, [setCoverSize, sizeIndex])
 
   const decreaseSize = useCallback(() => {
-    setSizeIndex((prev) => Math.max(0, prev - 1))
-  }, [])
+    setCoverSize(coverSizeAtOffset(sizeIndex, -1))
+  }, [setCoverSize, sizeIndex])
 
   const isAtMinSize = sizeIndex === 0
-  const isAtMaxSize = sizeIndex === numAvailableCoverSizes - 1
+  const isAtMaxSize = sizeIndex === NUM_AVAILABLE_COVER_SIZES - 1
 
   const buttonClass = useMemo(() => 'text-base h-6 w-4 disabled:bg-transparent disabled:cursor-default', [])
   const pillClass = useMemo(
@@ -57,7 +42,7 @@ export default function CoverSizeWidget({ className }: CoverSizeWidgetProps) {
   const textClass = useMemo(() => 'w-10 px-2 text-center font-mono text-base', [])
 
   return (
-    <div className={className}>
+    <div className={mergeClasses('max-sm:hidden', className)}>
       <div aria-label={t('LabelCoverSize')} role="group" className={pillClass}>
         <IconBtn className={buttonClass} disabled={isAtMinSize} onClick={decreaseSize} ariaLabel={t('LabelDecreaseCoverSize')} borderless>
           remove
