@@ -43,7 +43,8 @@ Upstream commits daily, so merges have to stay cheap:
   upstream's locale files — those are translated by other people and merged
   constantly, and keys only this fork uses would make every merge a conflict.
 
-`sasonica` is the staging line; `main` tracks upstream.
+`sasonica` is the staging line; `master` tracks upstream (upstream's default branch
+is `master`, not `main`).
 
 ## Building
 
