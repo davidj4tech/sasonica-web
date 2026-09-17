@@ -169,7 +169,7 @@ export default function LibraryFilterSelect({ entityType = 'items', user }: Libr
       'share-open': t('LabelShareOpen')
     }
     return simpleLabels[currentFilter] || currentFilter
-  }, [currentFilter, t, filterData])
+  }, [currentFilter, t, filterData, isConversations]) // Sasonica: isConversations
 
   const handleFilterChange = useCallback(
     (val: string | number) => {
@@ -464,7 +464,7 @@ export default function LibraryFilterSelect({ entityType = 'items', user }: Libr
     }
 
     return items
-  }, [t, filterData, isBook, isSeries, user, isMobile])
+  }, [t, filterData, isBook, isSeries, user, isMobile, isConversations]) // Sasonica: isConversations
 
   const handleClear = useCallback(() => {
     updateSetting(isSeries ? 'seriesFilterBy' : 'filterBy', 'all')
