@@ -1,0 +1,76 @@
+# Sasonica: build the client so red5 does not have to.
+#
+# A fork-only workflow, in its own file beside upstream's ci.yml rather than
+# inside it — upstream's runs on master and pull requests, this one runs on the
+# fork's staging line, and keeping them apart keeps upstream merges clean.
+#
+# It also runs the checks red5 cannot. `pnpm lint` over the whole tree wants
+# more memory than that host has and aborts there (on pristine upstream too),
+# so a full lint only ever really happens here.
+#
+# The artifact is what the Audiobookshelf container mounts: see
+# agent-media's deploy/quadlet/. `.next/cache` is excluded — it is the build
+# cache, not the build, and it is four fifths of the size (346M → 71M).
+name: Sasonica client
+
+on:
+  push:
+    branches: [sasonica]
+  pull_request:
+    branches: [sasonica]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: sasonica-client-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.33.0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Typecheck
+        run: pnpm typecheck
+
+      - name: Find hardcoded strings
+        run: pnpm find-hardcoded-strings
+
+      - name: Lint
+        run: pnpm lint
+
+      - name: Build
+        run: pnpm build
+
+      # The build cache would quadruple the upload and is no use to the
+      # server, which only ever reads the built output.
+      - name: Drop the build cache
+        run: rm -rf .next/cache
+
+      - name: Upload the client build
+        uses: actions/upload-artifact@v4
+        with:
+          name: sasonica-client
+          path: |
+            .next
+            public
+          retention-days: 14
+          if-no-files-found: error
