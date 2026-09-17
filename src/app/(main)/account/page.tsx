@@ -6,6 +6,8 @@ import { getTypeSafeTranslations } from '@/lib/getTypeSafeTranslations'
 
 import { getTheme } from '@/lib/theme'
 import { cookies } from 'next/headers'
+// Sasonica: the per-device settings (canvas address, timing readout).
+import SasonicaSettings from '@/components/sasonica/SasonicaSettings'
 import AccountActionsRow from './AccountActionsRow'
 import ThemeSelector from './ThemeSelector'
 import UserLanguageSelector from './UserLanguageSelector'
@@ -50,6 +52,9 @@ export default async function AccountPage() {
         <div className="bg-border h-px w-full" />
         <AccountActionsRow />
       </div>
+
+      {/* Sasonica */}
+      <SasonicaSettings />
     </div>
   )
 }

@@ -1,6 +1,7 @@
 'use client'
 
 import { canvasRequest, ConversationState } from '@/lib/sasonica/canvas'
+import { S } from '@/lib/sasonica/strings'
 import { useCallback, useEffect, useState } from 'react'
 
 /**
@@ -17,6 +18,8 @@ import { useCallback, useEffect, useState } from 'react'
  * request per item page and nothing else.
  */
 
+export type SessionAction = 'resume' | 'close' | 'terminal'
+
 export interface ConversationSession extends ConversationState {
   /** Still asking. The page waits rather than flashing the book chrome. */
   loading: boolean
@@ -24,6 +27,12 @@ export interface ConversationSession extends ConversationState {
   goToPane: () => Promise<void>
   /** After a reply reopens an ended session, or moves it. */
   setLive: (live: boolean, pane: string | null) => void
+  /**
+   * Manage the session behind this conversation: bring it back in a tmux
+   * window, end the one it runs in, or pull the desk's tmux client to it.
+   * Answers with a sentence to show, or '' when there was nothing to say.
+   */
+  manage: (action: SessionAction) => Promise<string>
 }
 
 const ABSENT: ConversationState = { ok: false, live: false, pane: null, session: null, resumable: false }
@@ -69,5 +78,30 @@ export function useConversationSession(libraryItemId: string, token: string): Co
     setState((prev) => ({ ...prev, live, pane }))
   }, [])
 
-  return { ...state, loading, goToPane, setLive }
+  const manage = useCallback(
+    async (action: SessionAction): Promise<string> => {
+      if (!state.session) return ''
+      if (action === 'terminal') {
+        await goToPane()
+        return ''
+      }
+      try {
+        const res = await canvasRequest<{ live?: boolean; pane?: string | null; opened?: boolean; closed?: boolean }>(
+          'POST',
+          action === 'resume' ? '/session/resume' : '/session/close',
+          token,
+          { session: state.session }
+        )
+        const live = !!res.live
+        setState((prev) => ({ ...prev, live, pane: live ? (res.pane ?? null) : null }))
+        if (action === 'resume') return res.opened ? S.sessionReopenedShort : S.sessionAlreadyRunning
+        return res.closed ? S.sessionClosed : S.sessionWasNotRunning
+      } catch (err) {
+        return err instanceof Error ? err.message : S.sessionActionFailed(action)
+      }
+    },
+    [goToPane, state.session, token]
+  )
+
+  return { ...state, loading, goToPane, setLive, manage }
 }

@@ -19,6 +19,7 @@ import { useCoverAccentColor } from '@/hooks/useCoverAccentColor'
 import { useItemPageSocket } from '@/hooks/useItemPageSocket'
 // Sasonica:
 import { useConversationSession } from '@/hooks/sasonica/useConversationSession'
+import { useFollowDebug } from '@/hooks/sasonica/useFollowDebug'
 import { useTypeSafeTranslations } from '@/hooks/useTypeSafeTranslations'
 import { getLibraryItemCoverUrl } from '@/lib/coverUtils'
 import { secondsToTimestamp } from '@/lib/datefns'
@@ -65,6 +66,7 @@ export default function LibraryItemClient({ libraryItem: initialLibraryItem }: L
   // conversation. On an ordinary item — and wherever the canvas is not
   // reachable — the answer is no and everything below is upstream's page.
   const conversation = useConversationSession(libraryItem.id, token)
+  const followDebug = useFollowDebug()
 
   const isPodcast = libraryItem.mediaType === 'podcast'
   const isBookWithAudio = libraryItem.mediaType === 'book' && ((libraryItem as BookLibraryItem).media.tracks?.length ?? 0) > 0
@@ -149,6 +151,7 @@ export default function LibraryItemClient({ libraryItem: initialLibraryItem }: L
         isItemPlaying={isItemPlaying}
         onPlay={handlePlay}
         onGoToTimestamp={handleGoToTimestamp}
+        debug={followDebug}
       />
     )
   }

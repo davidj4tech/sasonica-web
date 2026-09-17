@@ -3,6 +3,9 @@
 import { type BookMedia, isPersonalizedSeriesRef } from '@/types/api'
 import { useMemo } from 'react'
 import MediaCard, { type MediaCardProps } from './MediaCard'
+// Sasonica: a conversation whose session is running carries agent-media's
+// `live` tag.
+import { S } from '@/lib/sasonica/strings'
 
 export type BookMediaCardProps = MediaCardProps
 
@@ -63,5 +66,33 @@ export default function BookMediaCard(props: BookMediaCardProps) {
     return BookOverlayBadges
   }, [ebookFormat])
 
-  return <MediaCard {...props} renderBadges={renderBadges} renderOverlayBadges={renderOverlayBadges} />
+  // Sasonica: the same green dot as the chat page's title row, so a live
+  // conversation can be told apart on a shelf or a projects page. Wrapped
+  // around upstream's badges rather than woven into them: the dot is always
+  // shown, where those come and go with hover and selection.
+  const isLive = useMemo(() => {
+    const tags = (media as { tags?: string[] }).tags
+    return Array.isArray(tags) && tags.includes('live')
+  }, [media])
+
+  const renderBadgesWithLive = useMemo(() => {
+    if (!isLive) return renderBadges
+    const WithLive = (badgeProps: { isHovering: boolean; isSelectionMode: boolean; processing: boolean }) => {
+      const Badges = renderBadges
+      return (
+        <>
+          <div
+            className="bg-success shadow-modal-content absolute start-[0.5em] top-[0.5em] z-20 rounded-full"
+            style={{ width: '0.65em', height: '0.65em' }}
+            title={S.sessionRunning}
+          />
+          <Badges {...badgeProps} />
+        </>
+      )
+    }
+    WithLive.displayName = 'BookBadgesWithLive'
+    return WithLive
+  }, [isLive, renderBadges])
+
+  return <MediaCard {...props} renderBadges={renderBadgesWithLive} renderOverlayBadges={renderOverlayBadges} />
 }

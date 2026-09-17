@@ -25,6 +25,27 @@ export const S = {
   // The Conversations library's word for a series — see lib/sasonica/conversations.
   projects: 'Projects',
 
+  // Settings (per device, not per account)
+  settingsHeading: 'Sasonica',
+  settingsCanvasLabel: 'agent-media canvas',
+  settingsCanvasHelp: 'Where to send replies typed under a conversation. Blank uses this server on port 8781.',
+  settingsTimingLabel: 'Follow-along timing readout',
+  settingsTimingHelp: "Under a reply being spoken: the server's sentence, the timeline's, and how far apart they are. For tuning the playout delay.",
+
+  // Live shelf and session controls
+  liveShelf: 'Live',
+  sessionRunning2: 'session running',
+  resumeSession: 'Resume session',
+  closeSession: 'Close session',
+  goToTerminal: 'Go to terminal',
+  sessionMenu: 'Session',
+  sessionGone: 'The session is gone.',
+  sessionReopenedShort: 'Session reopened.',
+  sessionAlreadyRunning: 'Session is already running.',
+  sessionClosed: 'Session closed.',
+  sessionWasNotRunning: 'Session was not running.',
+  sessionActionFailed: (action: string) => `Could not ${action} the session.`,
+
   play: 'Play',
   pause: 'Pause',
 

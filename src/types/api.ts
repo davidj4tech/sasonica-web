@@ -1291,6 +1291,8 @@ export interface PersonalizedShelf {
     | 'listen-again'
     | 'read-again'
     | 'newest-authors'
+    // Sasonica: conversations whose Claude Code session is running now.
+    | 'sasonica-live'
   label: string
   labelStringKey: string
   type: PersonalizedShelfType

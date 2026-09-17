@@ -22,6 +22,8 @@ import {
   applyLibraryItemsAddedToRecentlyAddedShelf,
   prunePersonalizedShelves
 } from '@/lib/personalizedShelfUtils'
+// Sasonica: the Live shelf — conversations whose session is running now.
+import { useLiveShelf } from '@/hooks/sasonica/useLiveShelf'
 import {
   Author,
   AuthorRemovedPayload,
@@ -118,7 +120,14 @@ export default function LibraryClient({ personalized, libraryItemCount: libraryI
   const [shelves, setShelves] = useState(personalized)
   const [libraryItemCount, setLibraryItemCount] = useState(libraryItemCountProp)
 
-  const visibleShelves = useMemo(() => prunePersonalizedShelves(shelves), [shelves])
+  // Sasonica: the Live shelf goes first — it is the one thing on this page
+  // that is happening right now. Null when nothing is live, so an ordinary
+  // library sees upstream's page untouched.
+  const liveShelf = useLiveShelf(library.id, library.mediaType)
+  const visibleShelves = useMemo(() => {
+    const pruned = prunePersonalizedShelves(shelves)
+    return liveShelf ? [liveShelf, ...pruned] : pruned
+  }, [shelves, liveShelf])
 
   useEffect(() => {
     setShelves(personalized)
