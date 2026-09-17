@@ -13,6 +13,9 @@ import { useLibrary } from '@/contexts/LibraryContext'
 import { useUser } from '@/contexts/UserContext'
 import { useLibraryItemUpdated } from '@/hooks/useLibraryItemUpdated'
 import { useTypeSafeTranslations } from '@/hooks/useTypeSafeTranslations'
+// Sasonica:
+import { useIsConversationsLibrary } from '@/hooks/sasonica/useIsConversationsLibrary'
+import { S } from '@/lib/sasonica/strings'
 import { applyLibraryItemUpdateToShelves } from '@/lib/libraryItemUpdatedUtils'
 import { searchResultsToShelves } from '@/lib/searchResultsToShelves'
 import { Author, BookshelfView, LibraryItem, MediaProgress, PersonalizedShelf, SearchLibraryResponse, Series } from '@/types/api'
@@ -27,6 +30,8 @@ interface SearchClientProps {
 
 export default function SearchClient({ initialQuery, initialResults }: SearchClientProps) {
   const t = useTypeSafeTranslations()
+  // Sasonica: on the conversations library a series is a project.
+  const seriesLabel = useIsConversationsLibrary() ? S.projects : undefined
   const searchParams = useSearchParams()
   const urlQuery = searchParams.get('q')?.trim() ?? ''
   const { sizeMultiplier } = useCardSize()
@@ -34,12 +39,12 @@ export default function SearchClient({ initialQuery, initialResults }: SearchCli
   const { library, homeBookshelfView, showSubtitles } = useLibrary()
 
   const [query, setQuery] = useState(initialQuery)
-  const [shelves, setShelves] = useState<SearchShelf[]>(() => searchResultsToShelves(initialResults, t))
+  const [shelves, setShelves] = useState<SearchShelf[]>(() => searchResultsToShelves(initialResults, t, seriesLabel))
 
   useEffect(() => {
     setQuery(initialQuery)
-    setShelves(searchResultsToShelves(initialResults, t))
-  }, [initialQuery, initialResults, t])
+    setShelves(searchResultsToShelves(initialResults, t, seriesLabel))
+  }, [initialQuery, initialResults, t, seriesLabel]) // Sasonica: seriesLabel
 
   useEffect(() => {
     if (!urlQuery || urlQuery === initialQuery) return
@@ -50,7 +55,7 @@ export default function SearchClient({ initialQuery, initialResults }: SearchCli
       .then((results) => {
         if (!cancelled) {
           setQuery(urlQuery)
-          setShelves(searchResultsToShelves(results, t))
+          setShelves(searchResultsToShelves(results, t, seriesLabel))
         }
       })
       .catch((error) => {
@@ -64,7 +69,7 @@ export default function SearchClient({ initialQuery, initialResults }: SearchCli
     return () => {
       cancelled = true
     }
-  }, [urlQuery, initialQuery, library.id, t])
+  }, [urlQuery, initialQuery, library.id, t, seriesLabel]) // Sasonica: seriesLabel
 
   const handleItemUpdated = useCallback((updatedItem: LibraryItem) => {
     setShelves((prev) => applyLibraryItemUpdateToShelves(prev as PersonalizedShelf[], updatedItem) as SearchShelf[])

@@ -5,6 +5,9 @@ import { useBookshelfSelection } from '@/contexts/BookshelfSelectionContext'
 import { useLibrary } from '@/contexts/LibraryContext'
 import { useTypeSafeTranslations } from '@/hooks/useTypeSafeTranslations'
 import { isLibraryIssuesPage } from '@/hooks/useLibraryRouteGuard'
+// Sasonica:
+import { useIsConversationsLibrary } from '@/hooks/sasonica/useIsConversationsLibrary'
+import { S } from '@/lib/sasonica/strings'
 import { usePathname, useSearchParams } from 'next/navigation'
 
 // Pages that should show item count and toolbar extras
@@ -15,6 +18,8 @@ export default function Toolbar() {
   const searchParams = useSearchParams()
   const { library, itemCount, itemCountSupplement, detailToolbarTitle, contextMenuItems, onContextMenuAction, toolbarExtras, filterBy, seriesFilterBy } =
     useLibrary()
+  // Sasonica: on the conversations library a series is a project.
+  const isConversations = useIsConversationsLibrary()
   const { isSelectionMode } = useBookshelfSelection()
   const t = useTypeSafeTranslations()
 
@@ -37,7 +42,7 @@ export default function Toolbar() {
   // Determine item name based on current page and library type
   let itemName = ''
   if (isSeriesPage) {
-    itemName = t('LabelSeries')
+    itemName = isConversations ? S.projects : t('LabelSeries') // Sasonica
   } else if (pathname.endsWith('/collections')) {
     itemName = t('LabelCollections')
   } else if (pathname.endsWith('/playlists')) {

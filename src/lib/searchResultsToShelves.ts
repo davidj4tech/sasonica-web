@@ -17,7 +17,10 @@ export function searchResultsHasResults(results: SearchLibraryResponse | null): 
   )
 }
 
-export function searchResultsToShelves(results: SearchLibraryResponse | null, t: TypeSafeTranslations): SearchShelf[] {
+// Sasonica: `seriesLabel` overrides the series shelf's heading — the
+// conversations library calls that grouping Projects. One optional argument
+// rather than a second copy of this function.
+export function searchResultsToShelves(results: SearchLibraryResponse | null, t: TypeSafeTranslations, seriesLabel?: string): SearchShelf[] {
   if (!results) return []
 
   const shelves: SearchShelf[] = []
@@ -55,7 +58,7 @@ export function searchResultsToShelves(results: SearchLibraryResponse | null, t:
   if (results.series?.length) {
     shelves.push({
       id: 'series',
-      label: t('LabelSeries'),
+      label: seriesLabel || t('LabelSeries'), // Sasonica
       type: 'series',
       entities: results.series.map((seriesObj) => ({
         ...seriesObj.series,

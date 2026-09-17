@@ -22,6 +22,9 @@ export const S = {
   dictate: 'Dictate a reply',
   send: 'Send reply',
   goToPane: (pane: string) => `go to ${pane}`,
+  // The Conversations library's word for a series — see lib/sasonica/conversations.
+  projects: 'Projects',
+
   play: 'Play',
   pause: 'Pause',
 

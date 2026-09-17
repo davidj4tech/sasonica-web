@@ -4,6 +4,9 @@ import Dropdown, { DropdownItem } from '@/components/ui/Dropdown'
 import { useLibrary } from '@/contexts/LibraryContext'
 import { useIsMobile } from '@/hooks/useMediaQuery'
 import { useTypeSafeTranslations } from '@/hooks/useTypeSafeTranslations'
+// Sasonica:
+import { useIsConversationsLibrary } from '@/hooks/sasonica/useIsConversationsLibrary'
+import { S } from '@/lib/sasonica/strings'
 import { filterDecode, filterEncode } from '@/lib/filterUtils'
 import { EntityType, User } from '@/types/api'
 import type { TranslationKey } from '@/types/translations'
@@ -25,6 +28,8 @@ const FILTER_TYPE_MESSAGE_KEYS: Record<string, TranslationKey> = {
 export default function LibraryFilterSelect({ entityType = 'items', user }: LibraryFilterSelectProps) {
   const { filterBy, updateSetting, seriesFilterBy, library, filterData } = useLibrary()
   const t = useTypeSafeTranslations()
+  // Sasonica: on the conversations library a series is a project.
+  const isConversations = useIsConversationsLibrary()
 
   const isSeries = entityType === 'series'
   const currentFilter = isSeries ? seriesFilterBy : filterBy
@@ -74,7 +79,7 @@ export default function LibraryFilterSelect({ entityType = 'items', user }: Libr
             narrators: t('LabelNarrator'),
             publishedYear: t('LabelPublishYear'),
             publisher: t('LabelPublisher'),
-            series: t('LabelSeries'),
+            series: isConversations ? S.projects : t('LabelSeries'), // Sasonica
             subtitle: t('LabelSubtitle'),
             tags: t('LabelTags')
           }
@@ -308,7 +313,7 @@ export default function LibraryFilterSelect({ entityType = 'items', user }: Libr
           value: `series.${filterEncode(s.id)}`
         })) || [])
       ]
-      items.push({ text: t('LabelSeries'), value: 'series', subitems: seriesSubitems })
+      items.push({ text: isConversations ? S.projects : t('LabelSeries'), value: 'series', subitems: seriesSubitems }) // Sasonica
 
       // Authors submenu
       if (filterData?.authors?.length) {

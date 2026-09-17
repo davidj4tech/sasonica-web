@@ -7,6 +7,7 @@ import { isLibraryIssuesPage } from '@/hooks/useLibraryRouteGuard'
 import { useTypeSafeTranslations } from '@/hooks/useTypeSafeTranslations'
 import { mergeClasses } from '@/lib/merge-classes'
 // Sasonica:
+import { useIsConversationsLibrary } from '@/hooks/sasonica/useIsConversationsLibrary'
 import { S } from '@/lib/sasonica/strings'
 import { Library } from '@/types/api'
 import Link from 'next/link'
@@ -36,6 +37,8 @@ export default function SideRailContent({
   const { userIsAdminOrUp, userCanUpload } = useUser()
   // Optional: AppBar mounts this drawer on settings/account (no LibraryProvider)
   const { filterData } = useLibraryOptional()
+  // Sasonica: on the conversations library a series is a project.
+  const isConversations = useIsConversationsLibrary()
   const numIssues = filterData?.numIssues ?? 0
   const issuesHref = `/library/${libraryId}/issues`
   const libraryHref = `/library/${libraryId}/items`
@@ -100,7 +103,7 @@ export default function SideRailContent({
           />
         </svg>
       ),
-      label: t('ButtonSeries'),
+      label: isConversations ? S.projects : t('ButtonSeries'), // Sasonica
       href: `/library/${libraryId}/series`,
       mediaType: 'book' as const
     },
