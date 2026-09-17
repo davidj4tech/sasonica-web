@@ -72,5 +72,9 @@ jobs:
           path: |
             .next
             public
+          # .next is a dot-directory, and upload-artifact skips hidden files
+          # by default — without this the artifact is `public/` alone, four
+          # megabytes of vendored pdf.js with no build in it at all.
+          include-hidden-files: true
           retention-days: 14
           if-no-files-found: error
